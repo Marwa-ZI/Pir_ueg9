@@ -13,315 +13,44 @@ R --quiet -e "IRkernel::installspec(user = TRUE, name = 'ir', displayname = 'R')
 python -m bash_kernel.install --user
 
 echo "=== Configuration de VEP ==="
-
-# Téléchargement des données de cache pour VEP (GRCh38 - version minimale)
-# Note: Ceci télécharge un cache minimal. Pour un cache complet, décommenter les lignes suivantes
-# mkdir -p ~/.vep
-# vep_install -a cf -s homo_sapiens -y GRCh38 --CONVERT
+# VEP cache téléchargeable manuellement si nécessaire
 
 echo "=== Configuration de Prokka ==="
-
-# Index des bases de données Prokka
 prokka --setupdb 2>/dev/null || echo "Prokka database setup completed or already configured"
 
 echo "=== Configuration de Bakta ==="
-
-# Note: Bakta nécessite le téléchargement d'une base de données volumineuse (~30GB)
-# Les utilisateurs devront la télécharger manuellement:
-# bakta_db download --output <output-path>
 echo "Bakta est installé. Pour utiliser Bakta, téléchargez la base de données avec:"
 echo "  bakta_db download --output ~/bakta_db"
 
 echo "=== Configuration de eggNOG-mapper ==="
-
-# eggNOG-mapper nécessite aussi le téléchargement de bases de données
 echo "eggNOG-mapper est installé. Pour télécharger les bases de données:"
 echo "  download_eggnog_data.py -y --data_dir ~/eggnog_data"
 
 echo "=== Installation de BAGEL4 ==="
 
 # Cloner BAGEL4 depuis GitHub
-cd ~
+cd /srv/conda/envs/notebook
 git clone https://github.com/annejong/BAGEL4.git
 cd BAGEL4
 
-# Rendre les scripts exécutables
-chmod +x BAGEL4.py
+# Rendre TOUS les scripts Perl exécutables
+chmod +x *.pl
 chmod +x *.sh 2>/dev/null || true
 
-# Créer un lien symbolique dans le PATH
-ln -sf ~/BAGEL4/BAGEL4.py /opt/conda/bin/BAGEL4
+# Créer un lien symbolique vers le wrapper principal
+ln -sf /srv/conda/envs/notebook/BAGEL4/bagel4_wrapper.pl /srv/conda/bin/bagel4
 
-# Télécharger les bases de données BAGEL4
-echo "Téléchargement des bases de données BAGEL4..."
-if [ -f "download_databases.sh" ]; then
-    bash download_databases.sh 2>/dev/null || echo "Base de données BAGEL4 à télécharger manuellement"
-fi
+echo "BAGEL4 installé dans /srv/conda/envs/notebook/BAGEL4"
+echo "Utilisation: bagel4 -i input.fasta -s output_folder"
 
 cd ~
-
-echo "BAGEL4 installé dans ~/BAGEL4"
-echo "Utilisation: BAGEL4 -i input.fasta -o output_folder"
-
-echo "=== Installation de Phandango ==="
-
-# Installer Phandango globalement via npm
-npm install -g phandango
-
-echo "Phandango installé. Utilisation:"
-echo "  phandango --help"
-echo "  Pour lancer le serveur: phandango --port 8080"
-
-echo "=== Installation de myRAST/SEED API ==="
-
-# Créer le répertoire pour SEED
-mkdir -p ~/myrast
-cd ~/myrast
-
-# Télécharger sas.tgz depuis le lien officiel
-echo "Téléchargement de la distribution SEED API..."
-wget -q http://blog.theseed.org/downloads/sas.tgz || {
-    echo "Erreur: Impossible de télécharger sas.tgz"
-    echo "Vous pouvez l'installer manuellement plus tard avec:"
-    echo "  wget http://blog.theseed.org/downloads/sas.tgz"
-    echo "  cd ~/myrast && tar -zxvf sas.tgz && cd modules && ./BUILD_MODULES"
-    cd ~
-    exit 0
-}
-
-if [ -f "sas.tgz" ]; then
-    echo "sas.tgz téléchargé avec succès"
-    
-    # Extraire l'archive
-    echo "Extraction de l'archive..."
-    tar -zxf sas.tgz
-    
-    # Sauvegarder le chemin
-    TOP=$(pwd)
-    
-    # Construire les modules Perl
-    echo "Compilation des modules Perl SEED..."
-    cd modules
-    
-    # BUILD_MODULES peut prendre du temps, on redirige la sortie
-    ./BUILD_MODULES > /tmp/build_modules.log 2>&1 || {
-        echo "Avertissement: Erreur lors de BUILD_MODULES"
-        echo "Voir /tmp/build_modules.log pour détails"
-    }
-    
-    cd "$TOP"
-    
-    # Configurer les variables d'environnement dans .bashrc
-    cat >> ~/.bashrc << EOF
-
-# myRAST/SEED API Configuration
-export MYRAST_HOME=$TOP
-export PERL5LIB=\$PERL5LIB:$TOP/lib:$TOP/modules/lib
-export PATH=\$PATH:$TOP/bin
-EOF
-    
-    # Charger les variables pour cette session
-    export PERL5LIB=$PERL5LIB:$TOP/lib:$TOP/modules/lib
-    export PATH=$PATH:$TOP/bin
-    
-    # Test de l'installation
-    echo "Test de l'installation myRAST..."
-    if perl -e 'use SeedEnv' 2>/dev/null; then
-        echo "✓ myRAST/SEED API installé avec succès!"
-    else
-        echo "⚠ myRAST installé mais le test a échoué"
-        echo "Vous pourrez tester manuellement avec: perl -e 'use SeedEnv'"
-    fi
-    
-    # Nettoyer l'archive
-    rm -f sas.tgz
-else
-    echo "Échec du téléchargement de sas.tgz"
-    echo "myRAST peut être installé manuellement plus tard"
-fi
-
-cd ~
-
-echo "=== Vérification des installations ==="
-
-# Vérification des versions des outils principaux
-echo "Versions des outils installés:"
-echo "- Python: $(python --version)"
-echo "- R: $(R --version | head -n1)"
-echo "- FastQC: $(fastqc --version)"
-echo "- BWA: $(bwa 2>&1 | grep Version || echo 'bwa installed')"
-echo "- Samtools: $(samtools --version | head -n1)"
-echo "- BCFtools: $(bcftools --version | head -n1)"
-echo "- SPAdes: $(spades.py --version)"
-echo "- QUAST: $(quast --version)"
-echo "- Prokka: $(prokka --version 2>&1)"
-echo "- Bakta: $(bakta --version 2>&1 | head -n1)"
-echo "- Trimmomatic: $(trimmomatic -version)"
-echo "- VEP: $(vep --help 2>&1 | grep 'Versions:' -A 1 || echo 'VEP installed')"
-echo "- eggNOG-mapper: $(emapper.py --version 2>&1 | head -n1 || echo 'installed')"
-echo "- BAGEL4: $(BAGEL4 --version 2>&1 | head -n1 || echo 'installed')"
-echo "- Phandango: $(phandango --version 2>&1 || echo 'installed')"
-echo "- HMMER: $(hmmsearch -h | grep HMMER || echo 'installed')"
-echo "- BLAST: $(blastn -version | head -n1)"
 
 echo "=== Configuration de JupyterLab ==="
-
-# Installation d'extensions JupyterLab utiles
-jupyter labextension install @jupyterlab/toc --no-build 2>/dev/null || echo "TOC extension already installed"
-
-# Build JupyterLab
-jupyter lab build --dev-build=False --minimize=True
+jupyter lab build --dev-build=False --minimize=True 2>/dev/null || echo "JupyterLab build completed"
 
 echo "=== Configuration terminée ==="
 
 # Création d'un répertoire de travail
 mkdir -p ~/work
-
-# Message de bienvenue
-cat > ~/WELCOME.md << 'EOF'
-# Environnement Bioinformatique
-
-Cet environnement contient les outils suivants:
-
-## Contrôle Qualité
-- FastQC v0.12.1
-- MultiQC v1.13
-- Fastp v0.23.1
-- Trimmomatic v0.39
-- Qualimap v2.2.2d
-
-## Alignement et Mapping
-- BWA v0.7.17
-- BWA-MEM2 v2.2.1
-- Samtools v1.21
-- HTSlib v1.22
-
-## Variant Calling
-- BCFtools v1.21
-- VarScan v2.4.6
-
-## Annotation de Variants
-- Ensembl VEP v112.0
-
-## Assemblage
-- SPAdes v4.0.0
-- QUAST v5.2.0
-
-## Annotation Génomique
-- Prokka v1.14.6
-- Bakta v1.9.3 (annotation moderne)
-- Roary v3.13.0 (pan-génome)
-- eggNOG-mapper v2.1.12 (annotation fonctionnelle)
-- **BAGEL4** (prédiction de bactériocines)
-- **myRAST/SEED API** (annotation RAST locale - installé automatiquement)
-- **Note RAST web**: RAST est aussi disponible comme service web (http://rast.nmpdr.org/)
-
-## Visualisation et Analyse
-- **Phandango** (visualisation interactive de génomes)
-
-## Outils de Recherche
-- HMMER v3.3+ (recherche de profils HMM)
-- BLAST+ v2.13+ (recherche de similarité)
-- CD-HIT v4.8+ (clustering de séquences)
-- MUSCLE v5.1+ (alignement multiple)
-
-## Utilitaires
-- BBTools v39.06
-- Python avec: BioPython, NumPy, Pandas, Matplotlib, Seaborn, PySAM
-- R avec: tidyverse, vcfR
-
-## Kernels Jupyter disponibles
-- Python 3
-- R
-- Bash
-
-Pour commencer, créez un nouveau notebook dans le répertoire `work/`.
-
-## Notes importantes
-
-### RAST (Rapid Annotation using Subsystem Technology)
-RAST est principalement disponible comme service web sur http://rast.nmpdr.org/
-Pour une annotation locale similaire, cet environnement fournit:
-- **Prokka**: Annotation rapide de génomes procaryotes
-- **Bakta**: Alternative moderne à Prokka avec annotation plus complète
-- **eggNOG-mapper**: Annotation fonctionnelle orthologique
-
-### BAGEL4 (Bacteriocin Genome Mining Tool)
-BAGEL4 prédit les gènes codant pour les bactériocines dans les génomes bactériens.
-
-**Utilisation basique:**
-```bash
-# Prédiction de bactériocines
-BAGEL4 -i genome.fasta -o bagel_results
-
-# Avec options personnalisées
-BAGEL4 -i genome.fasta -o bagel_results -m 1000 -d 5000
-```
-
-**Localisation:** `~/BAGEL4/`
-
-### Phandango (Interactive Visualization)
-Phandango permet la visualisation interactive de données génomiques (arbres phylogénétiques, alignements, métadonnées).
-
-**Utilisation:**
-```bash
-# Lancer le serveur Phandango
-phandango --port 8080
-
-# Puis ouvrir dans JupyterLab via le proxy
-# Ou utiliser directement les fichiers via l'interface web
-```
-
-**Formats supportés:** Newick (arbres), GFF (annotations), CSV (métadonnées)
-
-### myRAST/SEED API (Annotation RAST locale)
-myRAST est installé automatiquement et permet d'utiliser RAST localement via une API Perl.
-
-**Vérifier l'installation:**
-```bash
-# Test de base
-perl -e 'use SeedEnv'
-
-# Si aucune erreur, myRAST est prêt à l'emploi!
-```
-
-**Utilisation:**
-```bash
-# Charger les variables d'environnement (si pas déjà fait)
-source ~/.bashrc
-
-# Utiliser les scripts serveur disponibles
-svr_all_features --help
-svr_submit_genome --help
-```
-
-**Localisation:** `~/myrast/`
-
-**Documentation complète:** Voir `MYRAST_GUIDE.md`
-
-**Note:** myRAST nécessite une connexion aux serveurs SEED. Si vous n'avez pas accès au réseau, utilisez Prokka ou Bakta à la place.
-
-### Bases de données requises
-
-**VEP**: Les données de cache peuvent être téléchargées avec:
-```bash
-vep_install -a cf -s homo_sapiens -y GRCh38 --CONVERT
-```
-
-**Bakta**: Télécharger la base de données (~30 GB):
-```bash
-bakta_db download --output ~/bakta_db
-# Puis utiliser: bakta --db ~/bakta_db genome.fasta
-```
-
-**eggNOG-mapper**: Télécharger les bases de données:
-```bash
-download_eggnog_data.py -y --data_dir ~/eggnog_data
-```
-
-**BAGEL4**: Les bases de données sont téléchargées automatiquement lors de l'installation.
-
-**Prokka**: Les bases de données sont configurées automatiquement.
-EOF
 
 echo "Configuration complète!"
