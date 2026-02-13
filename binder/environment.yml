@@ -82,7 +82,7 @@ dependencies:
   
   # Annotation Tools
   - prokka==1.14.6
-  - roary
+  - panaroo
   - bakta  # Alternative moderne à Prokka
   - eggnog-mapper==2.1.12  # Annotation fonctionnelle (complémentaire à RAST)
   # Note: RAST est principalement un service web (rast.nmpdr.org)
