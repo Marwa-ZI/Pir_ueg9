@@ -35,7 +35,6 @@ python3-tk
 ghostscript
 libxml2
 libdb5.3
-blast2
 ncbi-blast+
 make
 gcc
