@@ -60,10 +60,10 @@ dependencies:
   - trimmomatic==0.39
   
   # Mapping and Alignment Tools
-  - bwa==0.7.17
+  - bwa
   - bwa-mem2==2.2.1
   - samtools==1.21
-  - htslib==1.22
+  - htslib
   
   # Quality Assessment
   - qualimap==2.2.2d
@@ -83,7 +83,7 @@ dependencies:
   # Annotation Tools
   - prokka==1.14.6
   - roary
-  - bakta==1.9.3  # Alternative moderne à Prokka
+  - bakta  # Alternative moderne à Prokka
   - eggnog-mapper==2.1.12  # Annotation fonctionnelle (complémentaire à RAST)
   # Note: RAST est principalement un service web (rast.nmpdr.org)
   # Pour annotation locale similaire à RAST, utiliser Prokka ou Bakta
