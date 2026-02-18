@@ -6,9 +6,6 @@ set -e
 
 echo "=== Configuration des kernels Jupyter ==="
 
-# Installation et configuration du kernel R
-R --quiet -e "IRkernel::installspec(user = TRUE, name = 'ir', displayname = 'R')"
-
 # Installation du kernel Bash (si pas déjà fait par conda)
 python -m bash_kernel.install --user
 
@@ -51,6 +48,6 @@ jupyter lab build --dev-build=False --minimize=True 2>/dev/null || echo "Jupyter
 echo "=== Configuration terminée ==="
 
 # Création d'un répertoire de travail
-mkdir -p ~/work
+mkdir -p ~/projet
 
 echo "Configuration complète!"

@@ -40,15 +40,6 @@ dependencies:
   # Jupyter archive
   - jupyter-archive
   
-  # R environment and kernel
-  - r-base>=4.2
-  - r-irkernel
-  - r-essentials
-  - r-readr
-  - r-dplyr
-  - r-tidyr
-  - r-stringr
-  - r-vcfr
   
   # Java (required for several tools)
   - openjdk>=11
